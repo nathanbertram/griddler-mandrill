@@ -33,9 +33,15 @@ module Griddler
       attr_reader :params
 
       def events
-        @events ||= ActiveSupport::JSON.decode(params[:mandrill_events]).map { |event|
-          event['msg'].with_indifferent_access if event['event'] == 'inbound'
-        }.compact
+        begin
+          @events ||= ActiveSupport::JSON.decode(params[:mandrill_events]).map { |event|
+            event['msg'].with_indifferent_access if event['event'] == 'inbound'
+          }.compact
+        rescue Oj::ParseError
+          @events ||= JSON.parse(params[:mandrill_events]).map { |event|
+            event['msg'].with_indifferent_access if event['event'] == 'inbound'
+          }.compact
+        end
       end
 
       def recipients(field, event)
